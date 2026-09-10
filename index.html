@@ -437,6 +437,50 @@
     white-space: nowrap;
   }
 
+  /* Progress bar for option 2's carousel: hugs the very bottom edge, clipped
+     by the card's own 20px radius, in the shoe's colour. It grows left to
+     right over the dwell time and paints over the ::before border, so on the
+     active card it reads as the bottom edge thickening. */
+  .selector__progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    display: none;
+    background: var(--shoe, var(--accent));
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .page[data-mode='swap'] .selector__progress { display: block; }
+
+  /* A 15s carousel that hard-cuts looks broken, so the graph and pane dissolve
+     between shoes. The metric labels don't change, so they stay put. */
+  .graph__petals,
+  .graph__shoe,
+  .info__head,
+  .info__specs {
+    transition: opacity 180ms ease;
+  }
+
+  .page[data-swapping='true'] .graph__petals,
+  .page[data-swapping='true'] .graph__shoe,
+  .page[data-swapping='true'] .info__head,
+  .page[data-swapping='true'] .info__specs {
+    opacity: 0;
+  }
+
+  /* Keep the carousel advancing, but without the movement. */
+  @media (prefers-reduced-motion: reduce) {
+    .graph,
+    .info,
+    .graph__petals,
+    .graph__shoe,
+    .info__head,
+    .info__specs { transition: none; }
+  }
+
   .selector__name {
     margin: 0;
     font-family: var(--font-compressed);
@@ -549,6 +593,52 @@
       } else {
         selected.add(shoe.id);
       }
+    }
+
+    /* --- option 2's carousel ------------------------------------------------
+       The advance is driven by the progress bar's own animation finishing
+       rather than a parallel timer, so the bar and the shoe can never drift
+       apart — if the browser throttles rendering, both stall together. */
+    const CAROUSEL_MS = 15000;
+    const SWAP_FADE_MS = 180;
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    let progress = null;
+
+    function stopCarousel() {
+      if (progress) {
+        progress.cancel();
+        progress = null;
+      }
+    }
+
+    function startCarousel(bar) {
+      stopCarousel();
+      if (!bar) return;
+      const run = bar.animate(
+        [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
+        { duration: CAROUSEL_MS, easing: 'linear', fill: 'forwards' }
+      );
+      progress = run;
+      run.finished
+        .then(() => {
+          // Ignore a finish a later render has already superseded.
+          if (progress !== run || mode !== 'swap') return;
+          const i = SHOES.findIndex((s) => selected.has(s.id));
+          swapTo(SHOES[(i + 1) % SHOES.length]);
+        })
+        .catch(() => {}); // cancel() rejects; nothing to do
+    }
+
+    function swapTo(shoe) {
+      stopCarousel();
+      const fade = reduceMotion.matches ? 0 : SWAP_FADE_MS;
+      page.dataset.swapping = 'true';
+      setTimeout(() => {
+        pick(shoe);
+        syncUrl();
+        renderAll();                  // restarts the bar for the new shoe
+        page.dataset.swapping = 'false';
+      }, fade);
     }
 
     function renderModes() {
@@ -729,8 +819,8 @@
     /* --- selectors ---------------------------------------------------------- */
 
     function renderSelectors() {
-      const bar = document.getElementById('selectors');
-      bar.textContent = '';
+      const row = document.getElementById('selectors');
+      row.textContent = '';
       for (const shoe of SHOES) {
         const button = document.createElement('button');
         button.type = 'button';
@@ -758,14 +848,24 @@
         tagline.textContent = shoe.tagline;
         text.append(name, tagline);
 
-        button.append(thumb, text);
+        const progressBar = document.createElement('div');
+        progressBar.className = 'selector__progress';
+
+        button.append(thumb, text, progressBar);
         button.addEventListener('click', () => {
+          // A manual pick restarts the dwell rather than inheriting it.
           pick(shoe);
           syncUrl();
           renderAll();
         });
 
-        bar.appendChild(button);
+        row.appendChild(button);
+      }
+
+      if (mode === 'swap') {
+        startCarousel(row.querySelector("[aria-pressed='true'] .selector__progress"));
+      } else {
+        stopCarousel();
       }
     }
 

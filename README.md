@@ -44,13 +44,35 @@ exactly the Figma frame. Selecting a second one:
 - drops the product photo, since one shoe's photo over several sets of scores
   would misread
 
-### Option 2 — swap
+### Option 2 — swap, with a carousel
 
 One shoe at a time. Clicking a shoe replaces the selection rather than adding
 to it, so the chart, product photo and info pane all swap to it. Nothing
 moves: the graph stays at left 60 and the info pane is always there. Switching
 from option 1 while several shoes are selected collapses down to the first of
 them.
+
+It also advances on its own every 15 seconds, wrapping back to the first shoe.
+A 4px bar in the shoe's own colour hugs the very bottom edge of the active
+card and fills left to right over the dwell, clipped by the card's 20px radius
+so it reads as the bottom edge thickening. Clicking a shoe restarts the dwell
+rather than inheriting the part-elapsed one.
+
+The advance is driven by the progress bar's own animation finishing
+(`animation.finished`) rather than a parallel `setTimeout`, so the bar and the
+shoe can't drift apart — if the browser throttles rendering, both stall
+together. A generation check ignores any finish that a later render has
+already superseded.
+
+The graph and info pane dissolve over 180ms between shoes; a 15s carousel that
+hard-cuts reads as a bug. That dissolve is the one thing here that wasn't
+asked for — drop the `[data-swapping]` rules and the `SWAP_FADE_MS` wait to
+get straight cuts back. Under `prefers-reduced-motion` the dissolve is skipped
+but the carousel still advances, since stopping it outright would just look
+broken to anyone demoing with that setting on.
+
+Option 1 never runs the carousel — the bars are `display: none` and the
+animation is cancelled, verified as zero running animations on the document.
 
 Because option 2 never has more than one shoe selected, the centring and
 pane-hiding rules simply never fire — there's no second layout path to keep in

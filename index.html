@@ -493,6 +493,16 @@
     opacity: 0;
   }
 
+  /* The layout transitions are for state *changes*. On the first paint the
+     markup starts at data-compare="false", so loading a comparison URL would
+     otherwise flash the info pane in and fade it straight back out. */
+  .page[data-init='true'] .graph,
+  .page[data-init='true'] .info,
+  .page[data-init='true'] .graph__petals,
+  .page[data-init='true'] .graph__shoe,
+  .page[data-init='true'] .info__head,
+  .page[data-init='true'] .info__specs { transition: none; }
+
   /* Keep the carousel advancing, but without the movement. */
   @media (prefers-reduced-motion: reduce) {
     .graph,
@@ -529,7 +539,7 @@
 <body>
 
   <div class="stage" id="stage">
-   <div class="page" id="page" data-compare="false">
+   <div class="page" id="page" data-compare="false" data-init="true">
     <div class="inset">
 
       <div class="modes" id="modes" role="group" aria-label="Behaviour option"></div>
@@ -938,6 +948,11 @@
     }
 
     renderAll();
+
+    // Everything is in its opening state, so transitions can take over now.
+    requestAnimationFrame(() => {
+      page.dataset.init = 'false';
+    });
   })();
   </script>
 </body>

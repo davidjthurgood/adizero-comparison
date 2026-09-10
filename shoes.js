@@ -31,8 +31,10 @@
     ],
   };
 
-  /* Scores are 0-10. `petal` is the shoe's colour, used both for its petals
-     and its wedge when several shoes are compared.
+  /* Scores are 0-10. `petal` is the shoe's colour, used for its petals, its
+     wedge when several shoes are compared, and its selector outline. Note
+     Adios Pro Evo 3 and Evo SL currently share #C73F55, so those two can't be
+     told apart in the comparison view — give one of them its own red to fix.
 
      `shoe` places the large product photo in the graph and `thumb` the small
      one in the selector — box size, rotation and crop for both come straight
@@ -65,7 +67,7 @@
       id: 'adios-pro-evo-3',
       name: 'Adios Pro Evo 3',
       tagline: 'The Sub-2 Supershoe.',
-      petal: '#2E7BE8',
+      petal: '#C73F55',
       info: RACING_COPY,
       scores: { lightness: 10, energy: 10, comfort: 5, stability: 4, value: 2, distance: 10 },
       shoe: {
@@ -85,7 +87,7 @@
       id: 'evo-sl',
       name: 'Evo SL',
       tagline: 'Feel Fast.',
-      petal: '#1FB573',
+      petal: '#C73F55',
       info: RACING_COPY,
       scores: { lightness: 7, energy: 8, comfort: 9, stability: 9, value: 10, distance: 8 },
       shoe: {

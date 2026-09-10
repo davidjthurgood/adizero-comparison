@@ -29,19 +29,19 @@ const CHART_SIZE = 504;                        // SVG viewBox, square
 const CX = CHART_SIZE / 2;                     // 252
 const CY = CHART_SIZE / 2;                     // 252
 
-/* Score 10 is the design's own full radius. Score 0 is lifted clear of the
-   product photo: measured by ray-marching each shoe cut-out from the chart
-   centre, the furthest any of them reaches along a petal axis is 135 (the
-   Value for Money axis at 180°, since the shoes point left-right), so 150
-   leaves a low petal ~15px of visible tip.
+/* Score 10 is the design's own full radius. Score 0 sits above the design's
+   own 45 so that a low score isn't swallowed by the product photo, which
+   covers the middle of the chart — ray-marching the cut-outs, the furthest any
+   reaches along a petal axis is 135, on the Value for Money axis at 180°
+   (the shoes point left-right, so that axis is worst).
 
-   The design's own scale started at 45, which is the right look but puts any
-   score below about 5 behind the shoe. Lifting the baseline costs
-   discrimination — a point is now 10.2 units of radius instead of 20.7, so
-   the gap between a 6 and an 8 reads about half as strongly. BASELINE is the
-   single knob if that trade wants rebalancing. */
+   Deliberately *not* high enough to clear the photo completely. A baseline of
+   150 did that but left a point worth only 10.2 units of radius, so a 2 read
+   as nearly as much as a 6. At 75 a point is worth 17.7 — close to the
+   design's own 20.7 — and the lowest scores are allowed to sit partly behind
+   the shoe rather than overstating themselves. */
 const MAX_RADIUS = 252;                        // score 10, straight from the design
-const BASELINE = 150;                          // score 0, clear of the product photo
+const BASELINE = 75;                           // score 0
 const R_PER_POINT = (MAX_RADIUS - BASELINE) / 10;
 
 const HALF_ANGLE = 30;                         // petal half-width, degrees

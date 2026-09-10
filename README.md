@@ -204,13 +204,17 @@ petals come out byte-identical to the pre-comparison version — verified both
 by re-running the ray-march against the Figma vectors for the same numbers to
 2dp, and by string-comparing the generated paths.
 
-Colours are per shoe in `shoes.js`: Adios Pro 5 `#FF5772`, Adios Pro Evo 3
-`#2E7BE8`, Evo SL `#1FB573`. The blue and green are placeholders picked to
-match the pink's weight on the card gradient — swap them for the real
-per-product accents when you have them. A selected shoe's selector outline
-takes the same colour (via a `--shoe` custom property), so the button and its
-wedges match; unselected shoes keep the design's neutral hairline, since they
-have no colour on the chart.
+Colours are per shoe in `shoes.js`, all in one red family: Adios Pro 5
+`#FF5772`, Adios Pro Evo 3 `#C73F55`, Evo SL `#C73F55`. A selected shoe's
+selector outline takes the same colour (via a `--shoe` custom property), so
+the button and its wedges match; unselected shoes keep the design's neutral
+hairline, since they have no colour on the chart.
+
+> **Evo 3 and Evo SL currently share `#C73F55`.** In the comparison view every
+> petal therefore has two identically-coloured wedges, and neither the wedges
+> nor the two selector outlines can be told apart by colour — only by
+> position. Giving one of them its own red fixes it; `#8E2438` would complete
+> a light → mid → dark ramp that stays in the family.
 
 Two things worth a decision:
 
@@ -246,28 +250,33 @@ are linear across that range to within ~0.3px.
 ### The baseline
 
 The design's scale was `45 + 20.7 × score` — score 0 at radius 45. That is the
-right look, but the product photo covers the middle of the chart, so any low
+right look, but the product photo covers the middle of the chart, so a low
 score disappears behind it. Ray-marching each shoe cut-out from the chart
 centre, the furthest any reaches along a petal axis is **135**, on the Value
 for Money axis at 180° (the shoes point left-right, so that axis is worst).
 Evo 3's Value for Money of 2 landed at 86 and was invisible.
 
-`BASELINE` is therefore **150**, leaving a score of 0 about 15px of visible
-tip on every axis. Score 10 is still 252, so the ghost petals and the chart's
-outer extent are untouched.
-
-This costs discrimination, which is the trade to keep in mind: a point is now
-10.2 units of radius rather than 20.7, so the gap between a 6 and an 8 reads
-about half as strongly, and the flower looks fuller at rest. It also means the
-single-shoe view no longer matches the Figma vector for any score below 10 —
-Adios Pro 5's 6s now reach 211 where the design has them at 169. That was a
-deliberate call to stop low scores vanishing; `BASELINE` is the single knob if
-it wants rebalancing.
+`BASELINE` is **75**. That is deliberately *not* high enough to clear the
+photo outright — 150 did that, but it left a point worth only 10.2 units of
+radius, so a 2 read as nearly as much as a 6. At 75 a point is worth 17.7,
+close to the design's own 20.7, and the very lowest scores are allowed to sit
+partly behind the shoe rather than overstating themselves.
 
 | score | 0 | 2 | 4 | 6 | 8 | 10 |
 | --- | --- | --- | --- | --- | --- | --- |
-| radius now | 150 | 170 | 191 | 211 | 232 | 252 |
+| radius | 75 | 110 | 146 | 181 | 217 | 252 |
 | design | 45 | 86 | 128 | 169 | 211 | 252 |
+
+Measured result across all three shoes: every petal clears the shoe across
+100% of its width except Evo 3's Value for Money of 2, which shows across
+**34%** of its width — its tip sits 20px behind the shoe but its flanks come
+out either side, so it reads as present and clearly small. Score 10 is
+untouched at 252, so the ghost petals and the chart's outer extent are exactly
+the design's.
+
+`BASELINE` is the single knob: raise it to make low scores more visible at the
+cost of overstating them, lower it toward 45 for design fidelity at the cost
+of hiding them.
 
 ### What is still verified against the vectors
 

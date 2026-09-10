@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADIZERO — compare the best</title>
+<style>
+  /* --- fonts ----------------------------------------------------------------
+     Self-hosted so the page renders identically anywhere, rather than relying
+     on adidasFG and Denton being installed. Declaring the same family names
+     the design uses means these take precedence over any local copies too, so
+     a machine that has them installed sees exactly the same metrics.
+     `font-display: block` holds the text invisible briefly instead of showing
+     a fallback at the wrong width and reflowing.
+  --------------------------------------------------------------------------- */
+  @font-face {
+    font-family: 'adidasFG';
+    src: url('assets/fonts/adidasFG.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+
+  @font-face {
+    font-family: 'adidasFG Compressed';
+    src: url('assets/fonts/adidasFG-CompressedBold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+  }
+
+  @font-face {
+    font-family: 'Denton Light';
+    src: url('assets/fonts/Denton-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: block;
+  }
+
+  /* ---------------------------------------------------------------------------
+     Geometry is straight from Figma node 2869:230287. That frame's `inset` is
+     vertically flipped, so every child's Figma `top` is really its distance
+     from the bottom; the values below are the resolved visual positions.
+  --------------------------------------------------------------------------- */
+  :root {
+    --page-w: 1366px;
+    --page-h: 1129px;
+    --inset-w: 1358px;
+
+    --graph-w: 903px;
+    --graph-h: 560px;
+    --graph-y: 264px;
+    --graph-x: 60px;                        /* one shoe: sits left of the pane */
+    --graph-x-centred: 227.5px;             /* several: centred in the inset   */
+
+    --info-w: 339px;
+    --info-x: 967px;
+
+    --radius: 20px;
+
+    /* Chart: 504x504 SVG, centred on the graph card */
+    --chart-size: 504px;
+    --chart-x: 199px;   /* 451 - 252 */
+    --chart-y: 27.6px;  /* 279.6 - 252 */
+
+    /* Metric labels: the 625x460 ITEMS box from Figma */
+    --items-w: 625px;
+    --items-h: 460px;
+    --items-x: 131px;
+    --items-y: 48px;
+
+    --accent: #ff5772;
+    --translucent: rgba(255, 255, 255, 0.5);
+    --hairline: rgba(224, 223, 223, 0.5);
+
+    --font-compressed: 'adidasFG Compressed', 'adidasFG', 'Arial Narrow', Arial, sans-serif;
+    --font-sans: 'adidasFG', 'Helvetica Neue', Arial, sans-serif;
+    --font-serif: 'Denton Light', 'Denton', Georgia, 'Times New Roman', serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: #000;
+    font-family: var(--font-sans);
+  }
+
+  /* --- page ---------------------------------------------------------------- */
+
+  .page {
+    position: relative;
+    width: var(--page-w);
+    height: var(--page-h);
+    flex: none;
+    background: #000;
+  }
+
+  .inset {
+    position: absolute;
+    left: 4px;
+    top: 0;
+    width: var(--inset-w);
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: linear-gradient(to bottom, #f7f7f7 10.577%, #c6d5e5 100%);
+  }
+
+  /* --- option toggle -------------------------------------------------------
+     Not part of the design — a switch between the two behaviours under
+     review, sitting in the empty band above the heading. */
+
+  .modes {
+    position: absolute;
+    left: 64px;
+    top: 32px;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--hairline);
+    border-radius: 200px;
+    background: var(--translucent);
+  }
+
+  .modes button {
+    padding: 7px 16px;
+    border: 0;
+    border-radius: 200px;
+    background: none;
+    color: rgba(0, 0, 0, 0.45);
+    font-family: var(--font-compressed);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.13px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .modes button[aria-pressed='true'] { background: #000; color: #fff; }
+  .modes button:focus-visible { outline: 2px solid #000; outline-offset: 2px; }
+
+  /* --- heading ------------------------------------------------------------- */
+
+  .heading {
+    position: absolute;
+    left: 64px;
+    top: 103.1px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 1238px;
+    text-align: center;
+    color: #000;
+  }
+
+  .heading h1 {
+    margin: 0;
+    font-family: var(--font-compressed);
+    font-weight: 700;
+    font-size: 60px;
+    line-height: normal;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  .heading p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 21px;
+    line-height: normal;
+  }
+
+  /* --- graph card --------------------------------------------------------- */
+
+  /* Transparent in this frame — the inset's gradient shows through. */
+  .graph {
+    position: absolute;
+    left: var(--graph-x);
+    top: var(--graph-y);
+    width: var(--graph-w);
+    height: var(--graph-h);
+    overflow: hidden;
+    border-radius: var(--radius);
+    transition: left 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .page[data-compare='true'] .graph { left: var(--graph-x-centred); }
+
+  .graph__petals {
+    position: absolute;
+    left: var(--chart-x);
+    top: var(--chart-y);
+    width: var(--chart-size);
+    height: var(--chart-size);
+    overflow: visible;
+  }
+
+  .graph__shoe {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    overflow: hidden;
+    pointer-events: none;
+    /* size/translate/rotate are set per shoe from JS */
+  }
+
+  .graph__shoe img,
+  .thumb img {
+    position: absolute;
+    display: block;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .graph__items {
+    position: absolute;
+    left: var(--items-x);
+    top: var(--items-y);
+    width: var(--items-w);
+    height: var(--items-h);
+    overflow: hidden;
+  }
+
+  .pill {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: 1px solid var(--hairline);
+    border-radius: 200px;
+    background: var(--translucent);
+    color: #000;
+    font-family: var(--font-compressed);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.14px;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Figma trims the label's line box to the cap height, which is what makes
+     the pill 31px rather than ~36px. Needs the text in its own box. */
+  .pill > span {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+
+  /* --- info pane ---------------------------------------------------------- */
+
+  .info {
+    position: absolute;
+    left: var(--info-x);
+    top: var(--graph-y);
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: var(--info-w);
+    height: var(--graph-h);
+    padding: 0 20px;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: #000;
+    color: #fff;
+    transition: opacity 200ms ease, visibility 200ms;
+  }
+
+  .page[data-compare='true'] .info {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .info__head {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 40px;
+  }
+
+  .info__title {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: var(--font-compressed);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .info__eyebrow {
+    margin: 0;
+    color: var(--accent);
+    font-size: 24px;
+    letter-spacing: 0.24px;
+    line-height: normal;
+  }
+
+  .info__name {
+    margin: 0;
+    font-size: 42px;
+    line-height: 34px;
+    letter-spacing: 0.42px;
+    white-space: nowrap;
+  }
+
+  .info__body {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 18px;
+    line-height: normal;
+  }
+
+  .info__specs {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 223px;
+  }
+
+  .spec {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    height: 40px;
+    padding-left: 10px;
+  }
+
+  .spec__icon {
+    position: relative;
+    flex: none;
+  }
+
+  /* The exported SVGs carry their stroke overflow in the viewBox, so each sits
+     at its natural size centred on the box Figma gives it. */
+  .spec__icon img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
+    max-width: none;
+  }
+
+  .spec__text { letter-spacing: 0.5px; white-space: nowrap; }
+
+  .spec__label {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  .spec__value {
+    margin: 0;
+    font-family: var(--font-compressed);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 24px;
+    text-transform: uppercase;
+  }
+
+  /* --- selectors ---------------------------------------------------------- */
+
+  .selectors {
+    position: absolute;
+    left: 60px;
+    top: 844px;
+    display: flex;
+    gap: 4px;
+    width: 1248px;
+    height: 133px;
+  }
+
+  .selector {
+    position: relative;
+    flex: 1 0 0;
+    min-width: 0;
+    height: 133px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--translucent);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  /* Border lives on a pseudo-element so switching 1px -> 2px never nudges the
+     absolutely-positioned thumb and text inside. */
+  .selector::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    pointer-events: none;
+  }
+
+  .selector:focus-visible { outline: 2px solid #000; outline-offset: 3px; }
+
+  .selector[aria-pressed='true'] { background: none; }
+
+  /* A selected shoe is on the chart, so its outline carries the same colour
+     its petals do. --shoe is set per button from the shoe's `petal`. */
+  .selector[aria-pressed='true']::before {
+    border: 2px solid var(--shoe, var(--accent));
+  }
+
+  .thumb {
+    position: absolute;
+    top: 50%;
+    overflow: hidden;
+    pointer-events: none;
+    /* left/size/translate/rotate are set per shoe from JS */
+  }
+
+  .selector__text {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 208px;
+    color: #000;
+    white-space: nowrap;
+  }
+
+  .selector__name {
+    margin: 0;
+    font-family: var(--font-compressed);
+    font-weight: 700;
+    font-size: 35px;
+    line-height: 34px;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+
+  .selector__tagline {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 18px;
+    line-height: normal;
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+</style>
+</head>
+<body>
+
+  <div class="page" id="page" data-compare="false">
+    <div class="inset">
+
+      <div class="modes" id="modes" role="group" aria-label="Behaviour option"></div>
+
+      <div class="heading">
+        <h1 id="page-title"></h1>
+        <p id="page-statement"></p>
+      </div>
+
+      <div class="graph">
+        <svg class="graph__petals" id="petals" viewBox="0 0 504 504" aria-hidden="true"></svg>
+        <div class="graph__shoe" id="shoe" hidden><img alt=""></div>
+        <div class="graph__items" id="items"></div>
+      </div>
+
+      <aside class="info" id="info">
+        <div class="info__head">
+          <div class="info__title">
+            <p class="info__eyebrow" id="info-eyebrow"></p>
+            <h2 class="info__name" id="info-name"></h2>
+          </div>
+          <p class="info__body" id="info-body"></p>
+        </div>
+        <div class="info__specs" id="info-specs"></div>
+      </aside>
+
+      <div class="selectors" id="selectors"></div>
+
+    </div>
+  </div>
+
+  <script src="leaf-chart.js"></script>
+  <script src="shoes.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    const { CX, CY, MAX_RADIUS, segmentPath } = window.LeafChart;
+    const { METRICS, SHOES, PAGE } = window.ShoeData;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const page = document.getElementById('page');
+    const petals = document.getElementById('petals');
+    const items = document.getElementById('items');
+    const shoeBox = document.getElementById('shoe');
+    const shoeImg = shoeBox.querySelector('img');
+
+    /* Two behaviours under review:
+         compare (option 1) — shoes toggle, several at once, graph centres and
+                              the info pane drops out
+         swap    (option 2) — one shoe at a time, the layout never moves      */
+    const MODES = [
+      { id: 'compare', label: 'Option 1' },
+      { id: 'swap', label: 'Option 2' },
+    ];
+
+    // ?shoes=adios-pro-5,evo-sl and ?option=2 open a specific state. Defaults
+    // to option 1 on the single-shoe view the Figma frame is drawn in.
+    const params = new URLSearchParams(location.search);
+    const wanted = (params.get('shoes') || '').split(',');
+    const picked = SHOES.filter((s) => wanted.includes(s.id));
+    let mode = params.get('option') === '2' ? 'swap' : 'compare';
+
+    const start = picked.length ? picked : [SHOES[0]];
+    const selected = new Set((mode === 'swap' ? start.slice(0, 1) : start).map((s) => s.id));
+
+    const chosen = () => SHOES.filter((s) => selected.has(s.id));
+
+    function syncUrl() {
+      const q = new URLSearchParams();
+      q.set('shoes', chosen().map((s) => s.id).join(','));
+      if (mode === 'swap') q.set('option', '2');
+      history.replaceState(null, '', '?' + q);
+    }
+
+    /* Option 2 shows one shoe at a time, so picking one replaces the
+       selection. Option 1 toggles, keeping at least one shoe on the chart. */
+    function pick(shoe) {
+      if (mode === 'swap') {
+        selected.clear();
+        selected.add(shoe.id);
+      } else if (selected.has(shoe.id)) {
+        if (selected.size > 1) selected.delete(shoe.id);
+      } else {
+        selected.add(shoe.id);
+      }
+    }
+
+    function renderModes() {
+      const bar = document.getElementById('modes');
+      bar.textContent = '';
+      for (const option of MODES) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = option.label;
+        button.setAttribute('aria-pressed', String(mode === option.id));
+        button.addEventListener('click', () => {
+          if (mode === option.id) return;
+          mode = option.id;
+          // Collapse any comparison on the way into option 2.
+          if (mode === 'swap' && selected.size > 1) {
+            const first = chosen()[0];
+            selected.clear();
+            selected.add(first.id);
+          }
+          syncUrl();
+          renderAll();
+        });
+        bar.appendChild(button);
+      }
+    }
+
+    /* --- graph -------------------------------------------------------------- */
+
+    /* Gradients radiate from the chart centre out to the full 252 radius, so a
+       low score reads lighter — as in the design. One per shoe, plus the faint
+       dark wash for the "10" ghost petals behind everything. */
+    function buildDefs(shoes) {
+      const centre = `gradientUnits="userSpaceOnUse" cx="${CX}" cy="${CY}" r="${MAX_RADIUS}"`;
+      let html = `<radialGradient id="ghost" ${centre}>`
+        + '<stop offset="0" stop-color="#000" stop-opacity="0"/>'
+        + '<stop offset="1" stop-color="#000" stop-opacity="1"/></radialGradient>';
+      for (const shoe of shoes) {
+        html += `<radialGradient id="score-${shoe.id}" ${centre}>`
+          + `<stop offset="0" stop-color="${shoe.petal}" stop-opacity="0.1"/>`
+          + `<stop offset="1" stop-color="${shoe.petal}" stop-opacity="1"/></radialGradient>`;
+      }
+      const defs = document.createElementNS(SVG_NS, 'defs');
+      defs.innerHTML = html;
+      return defs;
+    }
+
+    function addPath(parent, d, fill, opacity) {
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', fill);
+      if (opacity !== 1) path.setAttribute('fill-opacity', opacity);
+      parent.appendChild(path);
+    }
+
+    function renderPetals() {
+      const shoes = chosen();
+      petals.textContent = '';
+      petals.appendChild(buildDefs(shoes));
+
+      // Every metric at 10, so the unfilled remainder of each petal shows.
+      const ghosts = document.createElementNS(SVG_NS, 'g');
+      for (const metric of METRICS) {
+        addPath(ghosts, segmentPath(metric.axis, 10), 'url(#ghost)', 0.05);
+      }
+      petals.appendChild(ghosts);
+
+      // Then each shoe's wedge of each petal, rounded like the petal itself.
+      const scored = document.createElementNS(SVG_NS, 'g');
+      for (const metric of METRICS) {
+        shoes.forEach((shoe, i) => {
+          const d = segmentPath(metric.axis, shoe.scores[metric.key], i, shoes.length);
+          addPath(scored, d, `url(#score-${shoe.id})`, 1);
+        });
+      }
+      petals.appendChild(scored);
+    }
+
+    function renderLabels() {
+      items.textContent = '';
+      for (const metric of METRICS) {
+        const pill = document.createElement('div');
+        pill.className = 'pill';
+        pill.appendChild(document.createElement('span')).textContent = metric.label;
+
+        const { left, top, centreX, centreY } = metric.pill;
+        const shift = [];
+        if (centreX !== undefined) {
+          pill.style.left = centreX + 'px';
+          shift.push('translateX(-50%)');
+        } else {
+          pill.style.left = left + 'px';
+        }
+        if (centreY) {
+          // The chart centre sits 2.5px below the ITEMS box centre.
+          pill.style.top = 'calc(50% + 2.5px)';
+          shift.push('translateY(-50%)');
+        } else {
+          pill.style.top = top + 'px';
+        }
+        if (shift.length) pill.style.transform = shift.join(' ');
+
+        items.appendChild(pill);
+      }
+    }
+
+    /* Sizes an element to a Figma image frame and drops the cropped photo in. */
+    function placePhoto(box, img, spec, transform) {
+      box.style.width = spec.box.w + 'px';
+      box.style.height = spec.box.h + 'px';
+      box.style.transform = transform;
+      img.style.width = spec.crop.w;
+      img.style.height = spec.crop.h;
+      img.style.left = spec.crop.left;
+      img.style.top = spec.crop.top;
+      img.src = spec.src;
+    }
+
+    /* The photo only makes sense for a single shoe — showing one product while
+       several sets of scores are on the chart would misread. */
+    function renderShoe() {
+      const shoes = chosen();
+      const spec = shoes.length === 1 ? shoes[0].shoe : null;
+      if (!spec) {
+        shoeBox.hidden = true;
+        shoeImg.removeAttribute('src');
+        return;
+      }
+      shoeBox.hidden = false;
+      const { dx, dy, rotate } = spec.box;
+      placePhoto(shoeBox, shoeImg, spec,
+        `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${rotate}deg)`);
+    }
+
+    /* --- info pane ---------------------------------------------------------- */
+
+    /* Copy is shared across all three shoes for now; only the product name
+       follows the selection. Hidden entirely while comparing. */
+    function renderInfo() {
+      const shoes = chosen();
+      if (shoes.length !== 1) return;
+      const shoe = shoes[0];
+      const copy = shoe.info;
+
+      document.getElementById('info-eyebrow').textContent = copy.eyebrow;
+      document.getElementById('info-name').textContent = shoe.name;
+      document.getElementById('info-body').textContent = copy.body;
+
+      const specs = document.getElementById('info-specs');
+      specs.textContent = '';
+      for (const item of copy.specs) {
+        const row = document.createElement('div');
+        row.className = 'spec';
+
+        const icon = document.createElement('div');
+        icon.className = 'spec__icon';
+        icon.style.width = item.w + 'px';
+        icon.style.height = item.h + 'px';
+        const img = document.createElement('img');
+        img.alt = '';
+        img.src = `assets/icons/${item.icon}.svg`;
+        icon.appendChild(img);
+
+        const text = document.createElement('div');
+        text.className = 'spec__text';
+        const label = document.createElement('p');
+        label.className = 'spec__label';
+        label.textContent = item.label;
+        const value = document.createElement('p');
+        value.className = 'spec__value';
+        value.textContent = item.value;
+        text.append(label, value);
+
+        row.append(icon, text);
+        specs.appendChild(row);
+      }
+    }
+
+    /* --- selectors ---------------------------------------------------------- */
+
+    function renderSelectors() {
+      const bar = document.getElementById('selectors');
+      bar.textContent = '';
+      for (const shoe of SHOES) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'selector';
+        button.style.setProperty('--shoe', shoe.petal);
+        button.setAttribute('aria-pressed', String(selected.has(shoe.id)));
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        thumb.style.left = shoe.thumb.box.cx + 'px';
+        const img = document.createElement('img');
+        img.alt = '';
+        placePhoto(thumb, img, shoe.thumb,
+          `translate(-50%, -50%) rotate(${shoe.thumb.box.rotate}deg)`);
+        thumb.appendChild(img);
+
+        const text = document.createElement('div');
+        text.className = 'selector__text';
+        text.style.left = shoe.thumb.textLeft + 'px';
+        const name = document.createElement('p');
+        name.className = 'selector__name';
+        name.textContent = shoe.name;
+        const tagline = document.createElement('p');
+        tagline.className = 'selector__tagline';
+        tagline.textContent = shoe.tagline;
+        text.append(name, tagline);
+
+        button.append(thumb, text);
+        button.addEventListener('click', () => {
+          pick(shoe);
+          syncUrl();
+          renderAll();
+        });
+
+        bar.appendChild(button);
+      }
+    }
+
+    /* --- page --------------------------------------------------------------- */
+
+    function renderAll() {
+      // Comparing several shoes centres the graph and drops the info pane.
+      // Option 2 never has more than one, so the layout stays put.
+      page.dataset.mode = mode;
+      page.dataset.compare = String(chosen().length > 1);
+      renderModes();
+      document.getElementById('page-title').textContent = PAGE.title;
+      document.getElementById('page-statement').textContent = PAGE.statement;
+      renderPetals();
+      renderLabels();
+      renderShoe();
+      renderInfo();
+      renderSelectors();
+    }
+
+    renderAll();
+  })();
+  </script>
+</body>
+</html>

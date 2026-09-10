@@ -544,7 +544,7 @@
   (function () {
     'use strict';
 
-    const { CX, CY, MAX_RADIUS, segmentPath } = window.LeafChart;
+    const { CX, CY, MAX_RADIUS, petalPath, segmentPath } = window.LeafChart;
     const { METRICS, SHOES, PAGE } = window.ShoeData;
 
     const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -699,9 +699,10 @@
       petals.appendChild(buildDefs(shoes));
 
       // Every metric at 10, so the unfilled remainder of each petal shows.
+      // Passing the shoe count keeps it aligned with the wedges inside it.
       const ghosts = document.createElementNS(SVG_NS, 'g');
       for (const metric of METRICS) {
-        addPath(ghosts, segmentPath(metric.axis, 10), 'url(#ghost)', 0.05);
+        addPath(ghosts, petalPath(metric.axis, 10, shoes.length), 'url(#ghost)', 0.05);
       }
       petals.appendChild(ghosts);
 

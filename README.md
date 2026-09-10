@@ -165,7 +165,21 @@ side; `segmentPath` works out a shoe's share of a petal; `petalPath` is the
 ±30° single-shoe case. Nothing is clipped and there is only one construction
 to keep correct.
 
-Two details make a subdivided petal read properly:
+Three details make a subdivided petal read properly:
+
+- **The petals explode.** While comparing, each petal is pushed out along its
+  own axis by `EXPLODE_COMPARE` = 35, taking the outer reach from 252 to 287 —
+  about 14% further out — so the six metrics read as six separated clusters
+  rather than one continuous ring. The grey outline behind each petal is
+  pushed by the same amount, which is why `petalPath` takes the shoe count.
+
+  35 is as close to 15% as the card allows. The ceiling is 36.7: the chart
+  centre sits 279.6 from the top of the 903×560 card and the topmost petals
+  climb 0.866 per unit pushed, so a literal 15% (38) clips the tips by about a
+  pixel. At 35 the chart clears the card by 1.5px at the top and 2.3px at the
+  bottom — measured, not estimated — which does mean it now fills the card's
+  full height. Drop it to ~24 for 11px of breathing room at the cost of some
+  separation.
 
 - **Gaps are grouped.** A wedge takes a wider half-gap on any edge it shares
   with a neighbouring petal and a tighter 1.2px on the dividers inside it, so

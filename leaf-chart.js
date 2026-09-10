@@ -48,6 +48,13 @@ const HALF_ANGLE = 30;                         // petal half-width, degrees
 const PETAL_GAP = 2.43;                        // half-gap at a petal's own edges
 const PETAL_GAP_COMPARE = 5.5;                 // …widened while comparing, see segmentPath
 const SEG_GAP = 1.2;                           // half-gap between shoes inside one petal
+/* Each petal is pushed out along its axis while comparing, so the six groups
+   read as six clusters rather than one ring. 35 puts the outer reach at 287,
+   ~14% further out than the 252 it sits at otherwise — as close to 15% as the
+   card allows. The ceiling is 36.7: the chart centre sits 279.6 from the top
+   of the 903x560 card, and the topmost petals climb 0.866 per unit pushed, so
+   38 (a literal 15%) would clip the tips by about a pixel. */
+const EXPLODE_COMPARE = 35;
 const NOSE_APEX = 44.86;                       // how close a tip comes to the centre
 const FILLET_SLOPE = 0.2367;                   // shoulder fillet vs. R
 const FILLET_INTERCEPT = 96.7;
@@ -117,8 +124,12 @@ function noseRadius(P, V, apex) {
  * @param {number} value    score, 0–10, driving the outer radius
  * @param {number} gapFrom  half-gap to leave at the `fromDeg` side
  * @param {number} gapTo    half-gap to leave at the `toDeg` side
+ * @param {number[]} shift  translation applied to every point, used to push a
+ *                          petal out along its axis. A pure translation moves
+ *                          each arc's centre with its endpoints, so the arc
+ *                          commands stay valid untouched.
  */
-function wedgePath(fromDeg, toDeg, value, gapFrom, gapTo) {
+function wedgePath(fromDeg, toDeg, value, gapFrom, gapTo, shift = [0, 0]) {
   const R = radiusFor(value);
   const half = ((toDeg - fromDeg) / 2) * RAD;
   const maxGap = Math.max(gapFrom, gapTo);
@@ -161,7 +172,8 @@ function wedgePath(fromDeg, toDeg, value, gapFrom, gapTo) {
   const rimA = mul(qA, R / (R - f));               // fillet ∩ outer arc
   const rimB = mul(qB, R / (R - f));
 
-  const p = ([x, y]) => `${(CX + x).toFixed(3)} ${(CY + y).toFixed(3)}`;
+  const p = ([x, y]) =>
+    `${(CX + x + shift[0]).toFixed(3)} ${(CY + y + shift[1]).toFixed(3)}`;
   // Every arc runs in the increasing-angle direction and turns less than 180°.
   const arc = (r, to) => `A ${r.toFixed(3)} ${r.toFixed(3)} 0 0 1 ${p(to)}`;
   const round = f > 0.5;
@@ -179,37 +191,50 @@ function wedgePath(fromDeg, toDeg, value, gapFrom, gapTo) {
 }
 
 /**
- * One shoe's share of a petal. `count` shoes split the petal's 60° evenly; the
- * wedge takes the petal's own gap on any edge it shares with a neighbouring
- * petal and the tighter SEG_GAP on the dividers inside it, so the six metrics
- * read as groups rather than one undifferentiated ring.
+ * One wedge of a petal, whether that's the whole petal or one shoe's share.
  *
- * While comparing, the between-petal gap widens to PETAL_GAP_COMPARE — a
- * single shoe fills its petal so 2.43 is enough to separate the six, but
- * subdivided petals need the group boundary to be unmistakably wider than the
- * dividers inside a group. A single shoe keeps the design's own 2.43, so its
- * geometry is untouched.
+ * `divisions` shoes split the petal's 60° evenly; a wedge takes the
+ * between-petal gap on any edge it shares with a neighbouring petal and the
+ * tighter SEG_GAP on the dividers inside it, so the six metrics read as groups
+ * rather than one undifferentiated ring.
  *
- * @param {number} axisDeg  petal axis, degrees clockwise from 3 o'clock
- * @param {number} value    score, 0–10
- * @param {number} index    which shoe, 0-based, ordered by increasing angle
- * @param {number} count    how many shoes are being compared
+ * `comparing` switches to the wider between-petal gap and pushes the whole
+ * petal out along its axis by EXPLODE_COMPARE. A single shoe fills its petal
+ * so it needs neither, and keeps the design's geometry exactly; a subdivided
+ * petal needs the group boundary to be unmistakable.
  */
-function segmentPath(axisDeg, value, index = 0, count = 1) {
-  const step = (HALF_ANGLE * 2) / count;
+function wedgeFor(axisDeg, value, index, divisions, comparing) {
+  const step = (HALF_ANGLE * 2) / divisions;
   const from = axisDeg - HALF_ANGLE + index * step;
-  const outer = count > 1 ? PETAL_GAP_COMPARE : PETAL_GAP;
+  const outer = comparing ? PETAL_GAP_COMPARE : PETAL_GAP;
   return wedgePath(
     from,
     from + step,
     value,
     index === 0 ? outer : SEG_GAP,
-    index === count - 1 ? outer : SEG_GAP
+    index === divisions - 1 ? outer : SEG_GAP,
+    mul(along(axisDeg), comparing ? EXPLODE_COMPARE : 0)
   );
 }
 
-/** A whole petal — the single-shoe case. */
-const petalPath = (axisDeg, value) => segmentPath(axisDeg, value, 0, 1);
+/**
+ * One shoe's share of a petal, ordered by increasing angle.
+ *
+ * @param {number} axisDeg  petal axis, degrees clockwise from 3 o'clock
+ * @param {number} value    score, 0–10
+ * @param {number} index    which shoe, 0-based
+ * @param {number} count    how many shoes are being compared
+ */
+const segmentPath = (axisDeg, value, index = 0, count = 1) =>
+  wedgeFor(axisDeg, value, index, count, count > 1);
+
+/**
+ * A whole petal. `count` is how many shoes are on the chart — the shape always
+ * spans the full 60°, but it has to be exploded and gapped to match whatever
+ * the wedges inside it are doing, or the grey outline drifts off them.
+ */
+const petalPath = (axisDeg, value, count = 1) =>
+  wedgeFor(axisDeg, value, 0, 1, count > 1);
 
 global.LeafChart = { CHART_SIZE, CX, CY, MAX_RADIUS, petalPath, segmentPath, radiusFor };
 })(typeof window !== 'undefined' ? window : globalThis);

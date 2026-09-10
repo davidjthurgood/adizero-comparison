@@ -88,7 +88,7 @@
       id: 'evo-sl',
       name: 'Evo SL',
       tagline: 'Feel Fast.',
-      petal: '#CA2E47',
+      petal: '#F52748',
       info: RACING_COPY,
       scores: { lightness: 7, energy: 8, comfort: 9, stability: 9, value: 10, distance: 8 },
       shoe: {

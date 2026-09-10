@@ -29,8 +29,21 @@ const CHART_SIZE = 504;                        // SVG viewBox, square
 const CX = CHART_SIZE / 2;                     // 252
 const CY = CHART_SIZE / 2;                     // 252
 
-const R_AT_ZERO = 45;                          // R(0)  — radius with no score
-const R_PER_POINT = 20.7;                      // R(10) = 45 + 207 = 252
+/* Score 10 is the design's own full radius. Score 0 is lifted clear of the
+   product photo: measured by ray-marching each shoe cut-out from the chart
+   centre, the furthest any of them reaches along a petal axis is 135 (the
+   Value for Money axis at 180°, since the shoes point left-right), so 150
+   leaves a low petal ~15px of visible tip.
+
+   The design's own scale started at 45, which is the right look but puts any
+   score below about 5 behind the shoe. Lifting the baseline costs
+   discrimination — a point is now 10.2 units of radius instead of 20.7, so
+   the gap between a 6 and an 8 reads about half as strongly. BASELINE is the
+   single knob if that trade wants rebalancing. */
+const MAX_RADIUS = 252;                        // score 10, straight from the design
+const BASELINE = 150;                          // score 0, clear of the product photo
+const R_PER_POINT = (MAX_RADIUS - BASELINE) / 10;
+
 const HALF_ANGLE = 30;                         // petal half-width, degrees
 const PETAL_GAP = 2.43;                        // half-gap at a petal's own edges
 const PETAL_GAP_COMPARE = 5.5;                 // …widened while comparing, see segmentPath
@@ -41,10 +54,9 @@ const FILLET_INTERCEPT = 96.7;
 const FILLET_WIDTH_CAP = 0.55;                 // …but never past this much of the rim half-width
 const FILLET_MIN_RATIO = 0.1014;               // …and never less than this much of R
 
-const MAX_RADIUS = R_AT_ZERO + R_PER_POINT * 10; // 252
 const RAD = Math.PI / 180;
 
-const radiusFor = (value) => R_AT_ZERO + R_PER_POINT * value;
+const radiusFor = (value) => BASELINE + R_PER_POINT * value;
 
 /**
  * Shoulder fillet radius.

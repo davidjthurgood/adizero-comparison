@@ -141,7 +141,8 @@ Measured rather than eyeballed:
 - pill widths within 0.7px, heights 31.3 vs 31
 - the Pro 5 photo's rotated frame lands its topmost corner on (341.20, 144.00)
   vs Figma's (341.19, 144); Evo 3 and Evo SL frames match to 0.01px
-- petal outlines within ±1.5px (score 10) and ±2.5px (scored), see below
+- score-10 petal outlines within ±1.5px of the Figma vectors; lower scores now
+  use a raised baseline and deliberately differ, see below
 
 One thing to note if you go back into the Figma file: `graph+amounts` contains
 a hidden `AMOUNTS-template` frame holding rows of eleven 5px dots spaced
@@ -234,23 +235,52 @@ construction instead:
   size, it does not shrink with the score
 - two straight **sides** on the ±30° rays, pushed inwards by 2.43px so
   neighbouring petals never touch
-- an outer **arc** struck from the chart centre at radius `R = 45 + 20.7 × score`
-  (so 10 → 252, the full radius)
-- a **fillet** rounding each shoulder, `0.2367 × (R − 96.7)`
+- an outer **arc** struck from the chart centre at radius
+  `R = BASELINE + (252 − BASELINE)/10 × score`
+- a **fillet** rounding each shoulder, `0.2367 × (R − 96.7)`, floored at
+  `0.1014 × R` so a low score still gets rounded corners
 
-Those three constants were measured off the Figma paths at scores 6, 8 and 10
-and are linear across that range to within ~0.3px. Checked by ray-marching
-both the generated and original paths from the chart centre: the value-10
-petals land within **±1.5px** of the Figma vectors and the scored petals within
-**±2.5px** on a 252px radius.
+Those constants were measured off the Figma paths at scores 6, 8 and 10 and
+are linear across that range to within ~0.3px.
 
-The one outlier is Energy Return (±2.5px). Its original outline was distorted
-where the boolean union merged it into the neighbouring petal, so the
-generated version is arguably the more correct of the two.
+### The baseline
 
-Scores below about 1.5 shrink the nose so the outer arc stays clear of it —
-otherwise the geometry would self-intersect. Nothing in the comparison table
-goes that low (the minimum is 2), so this never triggers in practice.
+The design's scale was `45 + 20.7 × score` — score 0 at radius 45. That is the
+right look, but the product photo covers the middle of the chart, so any low
+score disappears behind it. Ray-marching each shoe cut-out from the chart
+centre, the furthest any reaches along a petal axis is **135**, on the Value
+for Money axis at 180° (the shoes point left-right, so that axis is worst).
+Evo 3's Value for Money of 2 landed at 86 and was invisible.
+
+`BASELINE` is therefore **150**, leaving a score of 0 about 15px of visible
+tip on every axis. Score 10 is still 252, so the ghost petals and the chart's
+outer extent are untouched.
+
+This costs discrimination, which is the trade to keep in mind: a point is now
+10.2 units of radius rather than 20.7, so the gap between a 6 and an 8 reads
+about half as strongly, and the flower looks fuller at rest. It also means the
+single-shoe view no longer matches the Figma vector for any score below 10 —
+Adios Pro 5's 6s now reach 211 where the design has them at 169. That was a
+deliberate call to stop low scores vanishing; `BASELINE` is the single knob if
+it wants rebalancing.
+
+| score | 0 | 2 | 4 | 6 | 8 | 10 |
+| --- | --- | --- | --- | --- | --- | --- |
+| radius now | 150 | 170 | 191 | 211 | 232 | 252 |
+| design | 45 | 86 | 128 | 169 | 211 | 252 |
+
+### What is still verified against the vectors
+
+Score 10 is unchanged, so the ghost petals — which is what the Figma vectors
+actually contain at full size — still match. Ray-marching the generated and
+original paths from the chart centre put the score-10 petals within **±1.5px**
+of the Figma background vector, and the generated score-10 path string is
+byte-identical to the version checked before the baseline moved.
+
+Before the baseline changed, the scored petals matched the Figma union vector
+within **±2.5px** too, the one outlier being Energy Return, whose original
+outline was distorted where the boolean union merged it into its neighbour.
+Set `BASELINE` back to 45 to reproduce that.
 
 ## Product photography
 

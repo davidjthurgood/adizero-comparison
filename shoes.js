@@ -32,9 +32,10 @@
   };
 
   /* Scores are 0-10. `petal` is the shoe's colour, used for its petals, its
-     wedge when several shoes are compared, and its selector outline. Note
-     Adios Pro Evo 3 and Evo SL currently share #C73F55, so those two can't be
-     told apart in the comparison view — give one of them its own red to fix.
+     wedge when several shoes are compared, and its selector outline. All three
+     sit in one red family; Evo 3 and Evo SL are close in both lightness and
+     hue, so in the comparison view they lean on wedge position as much as
+     colour to tell apart.
 
      `shoe` places the large product photo in the graph and `thumb` the small
      one in the selector — box size, rotation and crop for both come straight
@@ -87,7 +88,7 @@
       id: 'evo-sl',
       name: 'Evo SL',
       tagline: 'Feel Fast.',
-      petal: '#C73F55',
+      petal: '#CA2E47',
       info: RACING_COPY,
       scores: { lightness: 7, energy: 8, comfort: 9, stability: 9, value: 10, distance: 8 },
       shoe: {

@@ -204,17 +204,25 @@ petals come out byte-identical to the pre-comparison version — verified both
 by re-running the ray-march against the Figma vectors for the same numbers to
 2dp, and by string-comparing the generated paths.
 
-Colours are per shoe in `shoes.js`, all in one red family: Adios Pro 5
-`#FF5772`, Adios Pro Evo 3 `#C73F55`, Evo SL `#C73F55`. A selected shoe's
-selector outline takes the same colour (via a `--shoe` custom property), so
-the button and its wedges match; unselected shoes keep the design's neutral
-hairline, since they have no colour on the chart.
+Colours are per shoe in `shoes.js`, all in one red family:
 
-> **Evo 3 and Evo SL currently share `#C73F55`.** In the comparison view every
-> petal therefore has two identically-coloured wedges, and neither the wedges
-> nor the two selector outlines can be told apart by colour — only by
-> position. Giving one of them its own red fixes it; `#8E2438` would complete
-> a light → mid → dark ramp that stays in the family.
+| | hex | L* |
+| --- | --- | --- |
+| Adios Pro 5 | `#FF5772` | 61.0 |
+| Adios Pro Evo 3 | `#C73F55` | 47.4 |
+| Evo SL | `#CA2E47` | 45.6 |
+
+A selected shoe's selector outline takes the same colour (via a `--shoe`
+custom property), so the button and its wedges match; unselected shoes keep
+the design's neutral hairline, since they have no colour on the chart.
+
+Worth knowing for the comparison view: Evo 3 and Evo SL are close together —
+ΔE (CIE76) of 8.8, and only 1.8 apart in lightness — where roughly 10 is the
+point below which two colours read as the same at a glance. Pro 5 separates
+cleanly from both (17.2 and 16.4). So in a three-way comparison the second and
+third wedges lean on position as much as colour. Dropping Evo SL's lightness
+(something nearer `#8E2438`, L* ≈ 33) would open the ramp up if that becomes a
+problem.
 
 Two things worth a decision:
 

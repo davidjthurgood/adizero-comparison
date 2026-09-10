@@ -43,9 +43,11 @@
      from the bottom; the values below are the resolved visual positions.
   --------------------------------------------------------------------------- */
   :root {
-    --page-w: 1366px;
+    /* The design's root frame is 1366 with the inset at x=4, but those 4px of
+       black are indistinguishable from the page behind it, so the inset is the
+       design unit. At a 1358px-wide stage the scale is exactly 1. */
+    --page-w: 1358px;
     --page-h: 1129px;
-    --inset-w: 1358px;
 
     --graph-w: 903px;
     --graph-h: 560px;
@@ -86,26 +88,46 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+    /* No horizontal padding: the stage has to be able to reach a full 1358
+       so the design can render at exactly 1:1. */
+    padding: 40px 0;
     background: #000;
     font-family: var(--font-sans);
   }
 
   /* --- page ---------------------------------------------------------------- */
 
-  .page {
+  /* This is one fixed composition, not a fluid layout, so it scales as a whole
+     rather than reflowing — see fitToStage(). The stage carries the scaled
+     height so the document flows around it; the page is centred inside it at
+     its full width and then scaled about its own top centre. */
+  .stage {
     position: relative;
+    width: 100%;
+    max-width: var(--page-w);
+    flex: none;
+  }
+
+  /* Scaled about its top-left corner and pinned to the stage's, so the scaled
+     width lands exactly on the stage width with no centring arithmetic. Auto
+     margins can't do it: CSS refuses to make them negative, so a 1358px box in
+     a narrower stage stays flush left and the scaled result comes out
+     offset. */
+  .page {
+    position: absolute;
+    left: 0;
+    top: 0;
     width: var(--page-w);
     height: var(--page-h);
-    flex: none;
     background: #000;
+    transform-origin: top left;
   }
 
   .inset {
     position: absolute;
-    left: 4px;
+    left: 0;
     top: 0;
-    width: var(--inset-w);
+    width: var(--page-w);
     height: 100%;
     overflow: hidden;
     border-radius: var(--radius);
@@ -506,7 +528,8 @@
 </head>
 <body>
 
-  <div class="page" id="page" data-compare="false">
+  <div class="stage" id="stage">
+   <div class="page" id="page" data-compare="false">
     <div class="inset">
 
       <div class="modes" id="modes" role="group" aria-label="Behaviour option"></div>
@@ -536,6 +559,7 @@
       <div class="selectors" id="selectors"></div>
 
     </div>
+   </div>
   </div>
 
   <script src="leaf-chart.js"></script>
@@ -549,6 +573,32 @@
 
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const page = document.getElementById('page');
+    const stage = document.getElementById('stage');
+
+    /* --- fit to the viewport ------------------------------------------------
+       The design is a single 1358x1129 composition and Figma gives no other
+       breakpoint, so the whole thing scales instead of reflowing: exact at its
+       native width, proportionally smaller below it, never larger.
+
+       At scale 1 the transform is removed rather than set to scale(1), because
+       a transform promotes the element to its own layer and can shift text
+       rasterisation — this keeps 1358px byte-for-byte identical to Figma. */
+    const DESIGN_W = 1358;
+    const DESIGN_H = 1129;
+    let lastStageWidth = -1;
+
+    function fitToStage() {
+      const width = stage.clientWidth;
+      if (width === lastStageWidth) return;   // our own height write re-fires the observer
+      lastStageWidth = width;
+
+      const scale = Math.min(1, width / DESIGN_W);
+      page.style.transform = scale === 1 ? 'none' : `scale(${scale})`;
+      stage.style.height = DESIGN_H * scale + 'px';
+    }
+
+    new ResizeObserver(fitToStage).observe(stage);
+    fitToStage();
     const petals = document.getElementById('petals');
     const items = document.getElementById('items');
     const shoeBox = document.getElementById('shoe');

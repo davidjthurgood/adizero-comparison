@@ -101,6 +101,37 @@ knowing about:
 
 Give a shoe its own copy object to break the three apart.
 
+## Responsive behaviour
+
+The design is a single fixed 1358 × 1129 composition and Figma defines no other
+breakpoint, so the page **scales as a whole rather than reflowing**. At a
+1358px-wide stage the scale is exactly 1 and every measurement matches Figma;
+below that it scales down proportionally; it is never scaled up, so on a wider
+screen it caps at 1358 and centres with the design's own black either side.
+
+Three details make that exact rather than approximate:
+
+- **At scale 1 the transform is removed, not set to `scale(1)`.** A transform
+  promotes the element to its own layer and can shift text rasterisation, so
+  the native width has no transform on it at all.
+- **The body has no horizontal padding.** The stage has to be able to reach a
+  full 1358 for the scale to hit 1 at a 1358px viewport.
+- **The page scales about its top-left corner**, pinned to the stage's. Auto
+  margins can't centre it: CSS refuses to make a margin negative, so a 1358px
+  box in a narrower stage stays flush left and the scaled result comes out
+  offset — 167px at a 1024px stage, which is what this originally did.
+
+`fitToStage()` sets the scale from a `ResizeObserver` on the stage, guarded on
+width so its own height write doesn't re-fire it. Verified from 1358 down to
+375: the page's edges land on the stage's to within 0.00px at every step, the
+stage height is exactly `1129 × scale`, nothing scrolls horizontally, and
+hit-testing still resolves to the right element when scaled.
+
+**Not a mobile layout.** At 375px the scale is 0.28, so 14px label text renders
+around 4px — the composition is complete and correct but not readable. Stacking
+the graph, info pane and selectors for narrow screens would mean inventing
+layout the design doesn't specify; worth a Figma pass if it's needed.
+
 ## Layout
 
 Figma's `inset` frame is vertically flipped, so every child's Figma `top` is
